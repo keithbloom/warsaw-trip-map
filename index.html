@@ -3,159 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warsaw Trip Map</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .auth-container {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        
-        .icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-        
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        button:hover {
-            background: #5568d3;
-        }
-        
-        .info {
-            margin-top: 20px;
-            padding: 12px;
-            background: #e3f2fd;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #1565c0;
-        }
-    </style>
+    <title>Warsaw Trip - January 2026</title>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="icon">🗺️</div>
-        <h1>Warsaw Trip Map</h1>
-        <div class="subtitle">January 8-11, 2026</div>
+    <div class="container">
+        <header>
+            <h1>🇵🇱 Warsaw Trip</h1>
+            <div class="trip-dates">Thursday 8 - Sunday 11 January 2026</div>
+        </header>
         
-        <div id="error" class="error" style="display: none;">
-            ❌ Invalid access key. Please try again.
-        </div>
-        
-        <input type="text" id="keyInput" placeholder="Enter access key" autocomplete="off">
-        <button onclick="checkKey()">Access Map</button>
-        
-        <div class="info">
-            🔒 This itinerary is private. Enter the access key shared with you to view the map.
+        <div class="map-container">
+            <div id="map">
+                <div class="tile-selector">
+                    <label for="tile-style">Map Style:</label>
+                    <select id="tile-style">
+                        <option value="osm">OpenStreetMap (Default)</option>
+                        <option value="cartodb-positron">CartoDB Positron (Minimal)</option>
+                        <option value="cartodb-voyager">CartoDB Voyager (Clean)</option>
+                        <option value="cartodb-dark">CartoDB Dark</option>
+                        <option value="esri-world">Esri World Street</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="legend">
+                    <h3 style="margin-bottom: 10px; font-size: 14px;">Legend</h3>
+                    <div class="legend-item">
+                        <span class="legend-icon">🏨</span>
+                        <span>Hotel</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">🏛️</span>
+                        <span>Museum/Palace</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">🍽️</span>
+                        <span>Restaurant/Food</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">☕</span>
+                        <span>Café/Drinks</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">🎭</span>
+                        <span>Activity</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">📍</span>
+                        <span>Point of Interest</span>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h3>Select Two Locations</h3>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Click on locations below to calculate distance</p>
+                    <div id="locations-list"></div>
+                </div>
+                
+                <div id="route-info-container"></div>
+            </div>
         </div>
     </div>
 
-    <script>
-        // The access key for this trip (can be changed)
-        const TRIP_KEY = 'warsaw2026family';
-        
-        // Check if already authenticated
-        if (sessionStorage.getItem('warsawTripAuth') === TRIP_KEY) {
-            window.location.href = 'map.html';
-        }
-        
-        // Check URL parameter for key
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlKey = urlParams.get('key');
-        if (urlKey === TRIP_KEY) {
-            sessionStorage.setItem('warsawTripAuth', TRIP_KEY);
-            window.location.href = 'map.html';
-        }
-        
-        function checkKey() {
-            const input = document.getElementById('keyInput');
-            const error = document.getElementById('error');
-            
-            if (input.value.trim() === TRIP_KEY) {
-                sessionStorage.setItem('warsawTripAuth', TRIP_KEY);
-                window.location.href = 'map.html';
-            } else {
-                error.style.display = 'block';
-                input.value = '';
-                input.focus();
-            }
-        }
-        
-        // Allow Enter key to submit
-        document.getElementById('keyInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkKey();
-            }
-        });
-        
-        // Focus input on load
-        document.getElementById('keyInput').focus();
-    </script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

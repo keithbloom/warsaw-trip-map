@@ -1,3 +1,10 @@
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-routing-machine';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import { locations, saveVisits } from './locations.js';
+import './style.css';
+
 // Initialize the map centered on Warsaw Old Town
 const map = L.map('map').setView([52.2330, 21.0106], 13);
 
