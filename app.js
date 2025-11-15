@@ -20,24 +20,30 @@ const tileLayers = {
         minZoom: 11,
         subdomains: 'abcd'
     }),
-    'stamen-terrain': L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png', {
-        attribution: '© Stamen Design © OpenStreetMap contributors',
-        maxZoom: 16,
-        minZoom: 11
+    'cartodb-dark': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        maxZoom: 19,
+        minZoom: 11,
+        subdomains: 'abcd'
     }),
-    'stamen-toner': L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png', {
-        attribution: '© Stamen Design © OpenStreetMap contributors',
-        maxZoom: 16,
+    'esri-world': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri',
+        maxZoom: 19,
         minZoom: 11
     })
 };
 
-// Add default tile layer (Stamen Terrain)
-let currentTileLayer = tileLayers['stamen-terrain'];
+// Add default tile layer (OpenStreetMap)
+let currentTileLayer = tileLayers['osm'];
 currentTileLayer.addTo(map);
 
 // Set the select dropdown to show the correct default
-document.getElementById('tile-style').value = 'stamen-terrain';
+document.getElementById('tile-style').value = 'osm';
+
+// Prevent map interactions on tile selector
+const tileSelector = document.querySelector('.tile-selector');
+L.DomEvent.disableClickPropagation(tileSelector);
+L.DomEvent.disableScrollPropagation(tileSelector);
 
 // Tile selector change handler
 document.getElementById('tile-style').addEventListener('change', function(e) {
