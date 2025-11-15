@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warsaw Trip - January 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .trip-dates {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .map-container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 200px);
+            min-height: 600px;
+        }
+        
+        #map {
+            flex: 1;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+        
+        .location-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .location-item:hover {
+            background: #f0f0f0;
+            transform: translateX(2px);
+        }
+        
+        .location-item.selected {
+            background: #e3f2fd;
+            border-left-color: #2196F3;
+        }
+        
+        .location-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .location-category {
+            font-size: 12px;
+            color: #666;
+            display: inline-block;
+            background: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin-bottom: 6px;
+        }
+        
+        .location-visit {
+            font-size: 12px;
+            color: #4CAF50;
+            margin-top: 4px;
+        }
+        
+        .route-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        
+        .route-info h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .route-distance {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .route-type {
+            color: #666;
+        }
+        
+        .route-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .clear-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .clear-btn:hover {
+            background: #d32f2f;
+        }
+        
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        
+        .add-visit-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+        
+        .add-visit-btn:hover {
+            background: #45a049;
+        }
+        
+        .visit-form {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .visit-form input {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .visit-form button {
+            padding: 6px 12px;
+            font-size: 11px;
+            margin-right: 6px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .visit-form .save {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .visit-form .cancel {
+            background: #999;
+            color: white;
+        }
+        
+        .leaflet-popup-content {
+            margin: 10px;
+            font-size: 13px;
+        }
+        
+        .popup-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .popup-category {
+            display: inline-block;
+            background: #e0e0e0;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        
+        .popup-link {
+            display: block;
+            color: #2196F3;
+            text-decoration: none;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .popup-link:hover {
+            text-decoration: underline;
+        }
+        
+        .popup-visit {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+            color: #4CAF50;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇵🇱 Warsaw Trip</h1>
+            <div class="trip-dates">Thursday 8 - Sunday 11 January 2026</div>
+        </header>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <div class="sidebar">
+                <div class="legend">
+                    <h3 style="margin-bottom: 10px; font-size: 14px;">Legend</h3>
+                    <div class="legend-item">
+                        <span class="legend-icon">🏨</span>
+                        <span>Hotel</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">🏛️</span>
+                        <span>Museum/Palace</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">🍽️</span>
+                        <span>Restaurant/Food</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">☕</span>
+                        <span>Café/Drinks</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">🎭</span>
+                        <span>Activity</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon">📍</span>
+                        <span>Point of Interest</span>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <h3>Select Two Locations</h3>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Click on locations below to calculate distance</p>
+                    <div id="locations-list"></div>
+                </div>
+                
+                <div id="route-info-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="locations.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
