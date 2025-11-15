@@ -1,0 +1,39 @@
+GitHub Setup Commands for Warsaw Trip Map
+==========================================
+
+1. Create Private Repository
+   Go to: https://github.com/new
+   - Name: warsaw-trip-map
+   - Privacy: PRIVATE ✓
+   - Do NOT initialize with README
+
+2. Push Your Code
+   Run these commands in the terminal:
+
+   git branch -M main
+   git push -u origin main
+
+3. Enable GitHub Pages
+   In your repository:
+   - Click "Settings" tab
+   - Click "Pages" in sidebar
+   - Under "Source": select "main" branch
+   - Click "Save"
+   - Wait 1-2 minutes
+
+4. Share With Family
+   Your map URL (copy and share):
+
+   https://keithbloom.github.io/warsaw-trip-map/?key=warsaw2026family
+
+   The ?key= parameter logs them in automatically!
+
+5. Optional: Change Access Key
+   For better security, edit index.html:
+   - Find: const TRIP_KEY = 'warsaw2026family';
+   - Change to your own secret key
+   - Update the shared URL with new key
+
+Need Help?
+- Check README.md for detailed instructions
+- See QUICK_START.md for troubleshooting

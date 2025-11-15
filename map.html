@@ -276,6 +276,39 @@
             color: #4CAF50;
             font-size: 12px;
         }
+
+        .tile-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .tile-selector label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .tile-selector select {
+            width: 180px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .tile-selector select:hover {
+            border-color: #2196F3;
+        }
     </style>
 </head>
 <body>
@@ -286,8 +319,19 @@
         </header>
         
         <div class="map-container">
-            <div id="map"></div>
-            
+            <div id="map">
+                <div class="tile-selector">
+                    <label for="tile-style">Map Style:</label>
+                    <select id="tile-style">
+                        <option value="osm">OpenStreetMap (Default)</option>
+                        <option value="cartodb-positron">CartoDB Positron (Minimal)</option>
+                        <option value="cartodb-voyager">CartoDB Voyager (Clean)</option>
+                        <option value="stamen-terrain">Stamen Terrain</option>
+                        <option value="stamen-toner">Stamen Toner (B&W)</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="sidebar">
                 <div class="legend">
                     <h3 style="margin-bottom: 10px; font-size: 14px;">Legend</h3>

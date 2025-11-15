@@ -1,11 +1,55 @@
 // Initialize the map centered on Warsaw Old Town
 const map = L.map('map').setView([52.2330, 21.0106], 13);
 
-// Add OpenStreetMap tiles
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19
-}).addTo(map);
+// Define available tile layers
+const tileLayers = {
+    'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 16,
+        minZoom: 11
+    }),
+    'cartodb-positron': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        maxZoom: 19,
+        minZoom: 11,
+        subdomains: 'abcd'
+    }),
+    'cartodb-voyager': L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        maxZoom: 19,
+        minZoom: 11,
+        subdomains: 'abcd'
+    }),
+    'stamen-terrain': L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.png', {
+        attribution: '© Stamen Design © OpenStreetMap contributors',
+        maxZoom: 16,
+        minZoom: 11
+    }),
+    'stamen-toner': L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}{r}.png', {
+        attribution: '© Stamen Design © OpenStreetMap contributors',
+        maxZoom: 16,
+        minZoom: 11
+    })
+};
+
+// Add default tile layer (Stamen Terrain)
+let currentTileLayer = tileLayers['stamen-terrain'];
+currentTileLayer.addTo(map);
+
+// Set the select dropdown to show the correct default
+document.getElementById('tile-style').value = 'stamen-terrain';
+
+// Tile selector change handler
+document.getElementById('tile-style').addEventListener('change', function(e) {
+    const selectedStyle = e.target.value;
+
+    // Remove current tile layer
+    map.removeLayer(currentTileLayer);
+
+    // Add new tile layer
+    currentTileLayer = tileLayers[selectedStyle];
+    currentTileLayer.addTo(map);
+});
 
 // Store markers and selected locations
 const markers = {};
@@ -206,25 +250,16 @@ function updateRoute() {
             const routes = e.routes;
             const summary = routes[0].summary;
             
-            // Display route info
+            // Display route info (walking distance only)
             const walkingTime = Math.round(summary.totalTime / 60); // minutes
-            const drivingTime = Math.round(walkingTime / 3); // rough estimate
             const walkingDistance = (summary.totalDistance / 1000).toFixed(2); // km
-            
+
             routeContainer.innerHTML = `
                 <div class="route-info">
                     <h4>Route: ${loc1.name} → ${loc2.name}</h4>
                     <div class="route-distance">
-                        <span class="route-type">📍 Straight line:</span>
-                        <span class="route-value">${distance.toFixed(2)} km</span>
-                    </div>
-                    <div class="route-distance">
                         <span class="route-type">🚶 Walking distance:</span>
                         <span class="route-value">${walkingDistance} km (~${walkingTime} min)</span>
-                    </div>
-                    <div class="route-distance">
-                        <span class="route-type">🚗 Driving distance:</span>
-                        <span class="route-value">${walkingDistance} km (~${drivingTime} min)</span>
                     </div>
                     <button class="clear-btn" onclick="clearSelection()">Clear Selection</button>
                 </div>
