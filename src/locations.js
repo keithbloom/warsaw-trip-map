@@ -1,5 +1,5 @@
 // Warsaw Trip Locations Data
-const locations = [
+export const locations = [
     {
         id: 'hotel',
         name: 'Puro Hotel Warsaw Old Town',
@@ -179,7 +179,7 @@ const locations = [
 ];
 
 // Load saved visits from localStorage
-function loadVisits() {
+export function loadVisits() {
     const saved = localStorage.getItem('warsaw-visits');
     if (saved) {
         const visits = JSON.parse(saved);
@@ -192,7 +192,7 @@ function loadVisits() {
 }
 
 // Save visits to localStorage
-function saveVisits() {
+export function saveVisits() {
     const visits = {};
     locations.forEach(loc => {
         if (loc.visit) {

@@ -1,0 +1,18 @@
+{
+  "name": "warsaw-trip-map",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interactive trip map for Warsaw, Poland",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "leaflet-routing-machine": "^3.2.12"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
