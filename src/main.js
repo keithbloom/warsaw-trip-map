@@ -309,3 +309,22 @@ const defaultBounds = group.getBounds().pad(0.1);
 document.getElementById('reset-zoom-btn').addEventListener('click', function() {
     map.fitBounds(defaultBounds);
 });
+
+// Mobile view toggle handlers
+const mapContainer = document.querySelector('.map-container');
+const showMapBtn = document.getElementById('show-map-btn');
+const showListBtn = document.getElementById('show-list-btn');
+
+showMapBtn.addEventListener('click', function() {
+    mapContainer.classList.remove('show-list');
+    showMapBtn.classList.add('active');
+    showListBtn.classList.remove('active');
+    // Invalidate map size after display change
+    setTimeout(() => map.invalidateSize(), 100);
+});
+
+showListBtn.addEventListener('click', function() {
+    mapContainer.classList.add('show-list');
+    showListBtn.classList.add('active');
+    showMapBtn.classList.remove('active');
+});
