@@ -8,7 +8,7 @@ export const locations = [
         lat: 52.2496,
         lng: 21.0082,
         url: 'https://purohotel.pl/en/warsaw-city/warsaw-old-town/rooms/',
-        notes: 'Our hotel if we can afford it'
+        notes: ''
     },
     {
         id: 'royal-palace',
@@ -78,7 +78,7 @@ export const locations = [
         lat: 52.1654,
         lng: 21.0910,
         url: 'https://wilanow-palac.pl/palac',
-        notes: '10km outside city centre'
+        notes: ''
     },
     {
         id: 'escape-room',
