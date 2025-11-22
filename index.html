@@ -4,6 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warsaw Trip - January 2026</title>
+    <script>
+        // Authentication check - redirect to auth page if not authenticated
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        const TRIP_KEY = 'warsaw2026family';
+        if (getCookie('warsawTripAuth') !== TRIP_KEY) {
+            // Get current path to construct auth.html URL
+            const path = window.location.pathname;
+            const basePath = path.substring(0, path.lastIndexOf('/') + 1);
+            window.location.href = basePath + 'auth.html';
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -23,6 +44,7 @@
                         <option value="cartodb-dark">CartoDB Dark</option>
                         <option value="esri-world">Esri World Street</option>
                     </select>
+                    <button id="reset-zoom-btn" class="reset-zoom-btn">Reset Zoom</button>
                 </div>
             </div>
 

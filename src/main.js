@@ -2,7 +2,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
-import { locations, saveVisits } from './locations.js';
+import { locations } from './locations.js';
 import './style.css';
 
 // Initialize the map centered on Warsaw Old Town
@@ -101,10 +101,6 @@ locations.forEach(location => {
         popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
     }
     
-    if (location.visit) {
-        popupContent += `<div class="popup-visit">📅 Visiting: ${location.visit}</div>`;
-    }
-    
     marker.bindPopup(popupContent);
     markers[location.id] = marker;
     
@@ -159,42 +155,19 @@ function renderLocationsList() {
                 const item = document.createElement('div');
                 item.className = 'location-item';
                 item.id = `loc-${location.id}`;
-                
+
                 if (selectedLocations.includes(location.id)) {
                     item.classList.add('selected');
                 }
-                
-                let itemHTML = `
+
+                item.innerHTML = `
                     <div class="location-name">${location.icon} ${location.name}</div>
                 `;
-                
-                if (location.visit) {
-                    itemHTML += `<div class="location-visit">📅 ${location.visit}</div>`;
-                }
-                
-                itemHTML += `
-                    <button class="add-visit-btn" onclick="showVisitForm('${location.id}', event)">
-                        ${location.visit ? 'Edit Visit' : '+ Add Visit'}
-                    </button>
-                    <div class="visit-form" id="visit-form-${location.id}">
-                        <input type="datetime-local" id="visit-input-${location.id}" 
-                               value="${location.visit || ''}" 
-                               placeholder="Date and time">
-                        <div>
-                            <button class="save" onclick="saveVisit('${location.id}', event)">Save</button>
-                            <button class="cancel" onclick="hideVisitForm('${location.id}', event)">Cancel</button>
-                        </div>
-                    </div>
-                `;
-                
-                item.innerHTML = itemHTML;
-                
-                item.addEventListener('click', (e) => {
-                    if (!e.target.closest('.add-visit-btn') && !e.target.closest('.visit-form')) {
-                        toggleLocationSelection(location);
-                    }
+
+                item.addEventListener('click', () => {
+                    toggleLocationSelection(location);
                 });
-                
+
                 categoryDiv.appendChild(item);
             });
             
@@ -322,54 +295,17 @@ function clearSelection() {
 // Make functions globally available
 window.clearSelection = clearSelection;
 
-// Visit form functions
-function showVisitForm(locationId, event) {
-    event.stopPropagation();
-    const form = document.getElementById(`visit-form-${locationId}`);
-    form.style.display = 'block';
-}
-
-function hideVisitForm(locationId, event) {
-    event.stopPropagation();
-    const form = document.getElementById(`visit-form-${locationId}`);
-    form.style.display = 'none';
-}
-
-function saveVisit(locationId, event) {
-    event.stopPropagation();
-    const input = document.getElementById(`visit-input-${locationId}`);
-    const location = locations.find(l => l.id === locationId);
-    
-    if (input.value) {
-        const date = new Date(input.value);
-        location.visit = date.toLocaleString('en-GB', { 
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } else {
-        location.visit = null;
-    }
-    
-    saveVisits();
-    hideVisitForm(locationId, event);
-    renderLocationsList();
-    
-    // Update marker popup
-    const marker = markers[locationId];
-    const popupContent = marker.getPopup().getContent();
-    let newContent = popupContent.replace(/<div class="popup-visit">.*?<\/div>/, '');
-    if (location.visit) {
-        newContent += `<div class="popup-visit">📅 Visiting: ${location.visit}</div>`;
-    }
-    marker.getPopup().setContent(newContent);
-}
-
 // Initialize
 renderLocationsList();
 
 // Fit map to show all markers
 const group = new L.featureGroup(Object.values(markers));
 map.fitBounds(group.getBounds().pad(0.1));
+
+// Store default bounds for reset zoom
+const defaultBounds = group.getBounds().pad(0.1);
+
+// Reset zoom button handler
+document.getElementById('reset-zoom-btn').addEventListener('click', function() {
+    map.fitBounds(defaultBounds);
+});

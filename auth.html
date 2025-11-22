@@ -119,6 +119,27 @@
     <script>
         // The access key for this trip (can be changed)
         const TRIP_KEY = 'warsaw2026family';
+        const COOKIE_NAME = 'warsawTripAuth';
+        const COOKIE_DAYS = 30;
+
+        // Cookie helper functions
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Strict";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
 
         // Get base path from current location
         const getBasePath = () => {
@@ -132,8 +153,8 @@
 
         const basePath = getBasePath();
 
-        // Check if already authenticated
-        if (sessionStorage.getItem('warsawTripAuth') === TRIP_KEY) {
+        // Check if already authenticated via cookie
+        if (getCookie(COOKIE_NAME) === TRIP_KEY) {
             window.location.href = basePath;
         }
 
@@ -141,7 +162,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const urlKey = urlParams.get('key');
         if (urlKey === TRIP_KEY) {
-            sessionStorage.setItem('warsawTripAuth', TRIP_KEY);
+            setCookie(COOKIE_NAME, TRIP_KEY, COOKIE_DAYS);
             window.location.href = basePath;
         }
 
@@ -150,7 +171,7 @@
             const error = document.getElementById('error');
 
             if (input.value.trim() === TRIP_KEY) {
-                sessionStorage.setItem('warsawTripAuth', TRIP_KEY);
+                setCookie(COOKIE_NAME, TRIP_KEY, COOKIE_DAYS);
                 window.location.href = basePath;
             } else {
                 error.style.display = 'block';
@@ -158,14 +179,14 @@
                 input.focus();
             }
         }
-        
+
         // Allow Enter key to submit
         document.getElementById('keyInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 checkKey();
             }
         });
-        
+
         // Focus input on load
         document.getElementById('keyInput').focus();
     </script>

@@ -8,8 +8,7 @@ export const locations = [
         lat: 52.2496,
         lng: 21.0082,
         url: 'https://purohotel.pl/en/warsaw-city/warsaw-old-town/rooms/',
-        notes: 'Our hotel if we can afford it',
-        visit: null
+        notes: 'Our hotel if we can afford it'
     },
     {
         id: 'royal-palace',
@@ -19,8 +18,7 @@ export const locations = [
         lat: 52.2477,
         lng: 21.0145,
         url: 'https://www.zamek-krolewski.pl/en/godziny-otwarcia-i-ceny-biletow',
-        notes: 'Historic royal residence',
-        visit: null
+        notes: 'Historic royal residence'
     },
     {
         id: 'warsaw-uprising',
@@ -30,8 +28,7 @@ export const locations = [
         lat: 52.2320,
         lng: 20.9802,
         url: 'https://www.1944.pl/en/article/visit-us,4993.html',
-        notes: 'WWII history museum',
-        visit: null
+        notes: 'WWII history museum'
     },
     {
         id: 'vodka-museum',
@@ -41,8 +38,7 @@ export const locations = [
         lat: 52.2526,
         lng: 21.0417,
         url: 'https://muzeumpolskiejwodki.pl/en/tours-and-tasting/standard/',
-        notes: 'Tours and tasting available',
-        visit: null
+        notes: 'Tours and tasting available'
     },
     {
         id: 'polin',
@@ -52,8 +48,7 @@ export const locations = [
         lat: 52.2496,
         lng: 20.9933,
         url: 'https://bilety.polin.pl/index.html?lang=en',
-        notes: 'Jewish history and culture',
-        visit: null
+        notes: 'Jewish history and culture'
     },
     {
         id: 'communist-museum',
@@ -63,8 +58,7 @@ export const locations = [
         lat: 52.2318,
         lng: 21.0065,
         url: 'https://mzprl.pl/wizyta/?lang=en',
-        notes: 'Communist era exhibition',
-        visit: null
+        notes: 'Communist era exhibition'
     },
     {
         id: 'neon-museum',
@@ -74,8 +68,7 @@ export const locations = [
         lat: 52.2443,
         lng: 20.9819,
         url: 'https://www.neonmuzeum.org/visit-museum',
-        notes: 'Vintage neon signs',
-        visit: null
+        notes: 'Vintage neon signs'
     },
     {
         id: 'wilanow-palace',
@@ -85,8 +78,7 @@ export const locations = [
         lat: 52.1654,
         lng: 21.0910,
         url: 'https://wilanow-palac.pl/palac',
-        notes: '10km outside city centre',
-        visit: null
+        notes: '10km outside city centre'
     },
     {
         id: 'escape-room',
@@ -96,8 +88,7 @@ export const locations = [
         lat: 52.2324,
         lng: 21.0119,
         url: 'https://blackcat.pl/en/pokoje/warsaw-uprising',
-        notes: 'Warsaw Uprising themed',
-        visit: null
+        notes: 'Warsaw Uprising themed'
     },
     {
         id: 'wedel',
@@ -107,8 +98,7 @@ export const locations = [
         lat: 52.2362,
         lng: 21.0105,
         url: null,
-        notes: 'Best hot chocolate - 8 Szpitalna Street',
-        visit: null
+        notes: 'Best hot chocolate - 8 Szpitalna Street'
     },
     {
         id: 'koszyki',
@@ -118,8 +108,7 @@ export const locations = [
         lat: 52.2245,
         lng: 21.0184,
         url: 'https://koszyki.com/uslugi/restauracje/?lang=en',
-        notes: 'Indoor food market',
-        visit: null
+        notes: 'Indoor food market'
     },
     {
         id: 'zapiecek',
@@ -129,8 +118,7 @@ export const locations = [
         lat: 52.2490,
         lng: 21.0120,
         url: 'http://www.restauracjazapiecek.pl/eng/menu.php',
-        notes: 'Best pierogi in Old Town - touristy but highly recommended',
-        visit: null
+        notes: 'Best pierogi in Old Town - touristy but highly recommended'
     },
     {
         id: 'nobu',
@@ -140,8 +128,7 @@ export const locations = [
         lat: 52.2286,
         lng: 21.0053,
         url: 'https://www.nobuhotels.com/warsaw/dining/nobu-restaurant/',
-        notes: 'High-end Japanese-Peruvian fusion',
-        visit: null
+        notes: 'High-end Japanese-Peruvian fusion'
     },
     {
         id: 'ramenownia',
@@ -151,8 +138,7 @@ export const locations = [
         lat: 52.2301,
         lng: 21.0152,
         url: 'https://warsawinsider.pl/ramenownia/',
-        notes: 'Recommended ramen spot',
-        visit: null
+        notes: 'Recommended ramen spot'
     },
     {
         id: 'nowy-swiat',
@@ -162,8 +148,7 @@ export const locations = [
         lat: 52.2340,
         lng: 21.0175,
         url: null,
-        notes: 'Good place for coffee and eating - main boulevard',
-        visit: null
+        notes: 'Good place for coffee and eating - main boulevard'
     },
     {
         id: 'communist-tour',
@@ -173,34 +158,6 @@ export const locations = [
         lat: 52.2297,
         lng: 21.0122,
         url: 'https://abpoland.com/tours/communist-tour-in-warsaw',
-        notes: 'Guided communist history tour',
-        visit: null
+        notes: 'Guided communist history tour'
     }
 ];
-
-// Load saved visits from localStorage
-export function loadVisits() {
-    const saved = localStorage.getItem('warsaw-visits');
-    if (saved) {
-        const visits = JSON.parse(saved);
-        locations.forEach(loc => {
-            if (visits[loc.id]) {
-                loc.visit = visits[loc.id];
-            }
-        });
-    }
-}
-
-// Save visits to localStorage
-export function saveVisits() {
-    const visits = {};
-    locations.forEach(loc => {
-        if (loc.visit) {
-            visits[loc.id] = loc.visit;
-        }
-    });
-    localStorage.setItem('warsaw-visits', JSON.stringify(visits));
-}
-
-// Initialize visits on load
-loadVisits();
