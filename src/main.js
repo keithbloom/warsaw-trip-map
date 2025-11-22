@@ -40,12 +40,13 @@ const tileLayers = {
     })
 };
 
+const defaultTileLayer = 'cartodb-positron';
 // Add default tile layer (OpenStreetMap)
-let currentTileLayer = tileLayers['osm'];
+let currentTileLayer = tileLayers[defaultTileLayer];
 currentTileLayer.addTo(map);
 
 // Set the select dropdown to show the correct default
-document.getElementById('tile-style').value = 'osm';
+document.getElementById('tile-style').value = defaultTileLayer;
 
 // Prevent map interactions on tile selector
 const tileSelector = document.querySelector('.tile-selector');
@@ -228,21 +229,31 @@ function toggleLocationSelection(location) {
 // Update route display
 function updateRoute() {
     const routeContainer = document.getElementById('route-info-container');
-    
+    const controlsContainer = document.getElementById('selection-controls');
+
+    // Update clear button visibility
+    if (selectedLocations.length > 0) {
+        controlsContainer.innerHTML = `
+            <button class="clear-btn" onclick="clearSelection()">Clear Selection</button>
+        `;
+    } else {
+        controlsContainer.innerHTML = '';
+    }
+
     // Clear existing route
     if (routingControl) {
         map.removeControl(routingControl);
         routingControl = null;
     }
-    
+
     if (selectedLocations.length === 2) {
         const loc1 = locations.find(l => l.id === selectedLocations[0]);
         const loc2 = locations.find(l => l.id === selectedLocations[1]);
-        
+
         // Calculate straight-line distance
         const distance = calculateDistance(loc1.lat, loc1.lng, loc2.lat, loc2.lng);
-        
-        // Show route on map using Leaflet Routing Machine
+
+        // Show route on map using Leaflet Routing Machine with pedestrian routing
         routingControl = L.Routing.control({
             waypoints: [
                 L.latLng(loc1.lat, loc1.lng),
@@ -254,15 +265,18 @@ function updateRoute() {
             lineOptions: {
                 styles: [{color: '#2196F3', opacity: 0.7, weight: 4}]
             },
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1'
+            }),
             show: false,
             createMarker: function() { return null; } // Don't create route markers
         }).addTo(map);
-        
+
         // Listen for route calculation
         routingControl.on('routesfound', function(e) {
             const routes = e.routes;
             const summary = routes[0].summary;
-            
+
             // Display route info (walking distance only)
             const walkingTime = Math.round(summary.totalTime / 60); // minutes
             const walkingDistance = (summary.totalDistance / 1000).toFixed(2); // km
@@ -274,11 +288,10 @@ function updateRoute() {
                         <span class="route-type">🚶 Walking distance:</span>
                         <span class="route-value">${walkingDistance} km (~${walkingTime} min)</span>
                     </div>
-                    <button class="clear-btn" onclick="clearSelection()">Clear Selection</button>
                 </div>
             `;
         });
-        
+
     } else {
         routeContainer.innerHTML = '';
     }
@@ -305,6 +318,9 @@ function clearSelection() {
     });
     updateRoute();
 }
+
+// Make functions globally available
+window.clearSelection = clearSelection;
 
 // Visit form functions
 function showVisitForm(locationId, event) {
