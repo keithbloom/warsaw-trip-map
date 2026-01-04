@@ -95,6 +95,77 @@
         </div>
     </div>
 
+    <!-- Location Management Modal -->
+    <div id="location-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeLocationModal()">✕</button>
+            <h3 id="modal-title">Add Location</h3>
+
+            <form id="location-form" onsubmit="saveLocation(event)">
+                <!-- Address Search -->
+                <div class="form-group">
+                    <label for="address-search">Search Address</label>
+                    <div class="search-container">
+                        <input type="text" id="address-search" placeholder="e.g., Copernicus Science Centre, Warsaw">
+                        <button type="button" class="search-btn" onclick="searchAddress()">Search</button>
+                    </div>
+                    <div id="search-results" class="search-results"></div>
+                    <div id="search-error" class="search-error"></div>
+                </div>
+
+                <!-- Location Details -->
+                <div class="form-group">
+                    <label for="location-name">Name *</label>
+                    <input type="text" id="location-name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="location-category">Category *</label>
+                    <select id="location-category" required>
+                        <option value="">Select category...</option>
+                        <option value="hotel">Hotel</option>
+                        <option value="museum">Museum/Palace</option>
+                        <option value="restaurant">Restaurant</option>
+                        <option value="cafe">Café</option>
+                        <option value="activity">Activity</option>
+                        <option value="poi">Point of Interest</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="location-icon">Icon (emoji) *</label>
+                    <input type="text" id="location-icon" placeholder="🏛️" maxlength="2" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location-lat">Latitude *</label>
+                        <input type="number" id="location-lat" step="0.000001" min="-90" max="90" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="location-lng">Longitude *</label>
+                        <input type="number" id="location-lng" step="0.000001" min="-180" max="180" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location-url">Website URL</label>
+                    <input type="url" id="location-url" placeholder="https://example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="location-notes">Notes</label>
+                    <textarea id="location-notes" rows="3" placeholder="Additional information"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeLocationModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Location</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
 </body>
 </html>
