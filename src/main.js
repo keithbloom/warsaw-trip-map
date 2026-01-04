@@ -499,6 +499,135 @@ function selectSearchResult(result) {
 // Make function globally available
 window.searchAddress = searchAddress;
 
+// Save location (add or edit)
+function saveLocation(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('location-name').value.trim();
+    const category = document.getElementById('location-category').value;
+    const icon = document.getElementById('location-icon').value.trim() || '📍';
+    const lat = parseFloat(document.getElementById('location-lat').value);
+    const lng = parseFloat(document.getElementById('location-lng').value);
+    const url = document.getElementById('location-url').value.trim() || null;
+    const notes = document.getElementById('location-notes').value.trim() || null;
+
+    // Validation
+    if (!name) {
+        alert('Please enter a location name.');
+        return;
+    }
+
+    if (!category) {
+        alert('Please select a category.');
+        return;
+    }
+
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+        alert('Latitude must be between -90 and 90.');
+        return;
+    }
+
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+        alert('Longitude must be between -180 and 180.');
+        return;
+    }
+
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        alert('URL must start with http:// or https://');
+        return;
+    }
+
+    // Create or update location
+    if (currentEditingLocationId) {
+        // Edit existing location
+        const index = locations.findIndex(loc => loc.id === currentEditingLocationId);
+        if (index !== -1) {
+            locations[index] = {
+                ...locations[index],
+                name,
+                category,
+                icon,
+                lat,
+                lng,
+                url,
+                notes
+            };
+        }
+    } else {
+        // Add new location
+        const newId = 'loc-' + Date.now();
+        locations.push({
+            id: newId,
+            name,
+            category,
+            icon,
+            lat,
+            lng,
+            url,
+            notes
+        });
+    }
+
+    // Mark as having unsaved changes
+    hasUnsavedChanges = true;
+    document.getElementById('unsaved-indicator').style.display = 'inline';
+
+    // Close modal
+    closeLocationModal();
+
+    // Re-render map and sidebar
+    refreshMapAndSidebar();
+}
+
+// Refresh map markers and sidebar
+function refreshMapAndSidebar() {
+    // Clear existing markers
+    Object.values(markers).forEach(marker => {
+        map.removeLayer(marker);
+    });
+
+    // Clear markers object
+    for (let key in markers) {
+        delete markers[key];
+    }
+
+    // Re-add all markers
+    locations.forEach(location => {
+        const marker = L.marker([location.lat, location.lng], {
+            icon: createCustomIcon(location.icon)
+        }).addTo(map);
+
+        let popupContent = `
+            <div class="popup-name">${location.name}</div>
+            <div class="popup-category">${location.category}</div>
+        `;
+
+        if (location.notes) {
+            popupContent += `<div style="margin-top: 6px; font-size: 12px; color: #666;">${location.notes}</div>`;
+        }
+
+        if (location.url) {
+            popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
+        }
+
+        marker.bindPopup(popupContent);
+        markers[location.id] = marker;
+
+        marker.on('click', () => {
+            toggleLocationSelection(location);
+        });
+    });
+
+    // Re-render sidebar
+    renderLocationsList();
+
+    // Update route if needed
+    updateRoute();
+}
+
+// Make function globally available
+window.saveLocation = saveLocation;
+
 // Initialize app by loading locations
 async function initializeApp() {
     try {
