@@ -5,6 +5,8 @@ import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 let locations = [];
 let isEditMode = false;
 let hasUnsavedChanges = false;
+let currentEditingLocationId = null;
+let previewMarker = null;
 import './style.css';
 
 // Initialize the map centered on Warsaw Old Town
@@ -318,6 +320,83 @@ function toggleEditMode() {
 // Make function globally available
 window.toggleEditMode = toggleEditMode;
 
+// Open modal for adding new location
+function openAddLocationModal() {
+    currentEditingLocationId = null;
+    document.getElementById('modal-title').textContent = 'Add Location';
+    document.getElementById('location-form').reset();
+    document.getElementById('search-results').classList.remove('active');
+    document.getElementById('search-error').classList.remove('active');
+    document.getElementById('location-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Open modal for editing existing location
+function editLocation(locationId) {
+    currentEditingLocationId = locationId;
+    const location = locations.find(loc => loc.id === locationId);
+
+    if (!location) return;
+
+    document.getElementById('modal-title').textContent = 'Edit Location';
+    document.getElementById('location-name').value = location.name;
+    document.getElementById('location-category').value = location.category;
+    document.getElementById('location-icon').value = location.icon;
+    document.getElementById('location-lat').value = location.lat;
+    document.getElementById('location-lng').value = location.lng;
+    document.getElementById('location-url').value = location.url || '';
+    document.getElementById('location-notes').value = location.notes || '';
+
+    document.getElementById('search-results').classList.remove('active');
+    document.getElementById('search-error').classList.remove('active');
+    document.getElementById('location-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Create preview marker
+    createPreviewMarker(location.lat, location.lng, location.icon);
+}
+
+// Close modal
+function closeLocationModal() {
+    document.getElementById('location-modal').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('location-form').reset();
+    document.getElementById('search-results').classList.remove('active');
+    document.getElementById('search-error').classList.remove('active');
+
+    // Remove preview marker if exists
+    if (previewMarker) {
+        map.removeLayer(previewMarker);
+        previewMarker = null;
+    }
+}
+
+// Create or update preview marker
+function createPreviewMarker(lat, lng, icon) {
+    // Remove existing preview
+    if (previewMarker) {
+        map.removeLayer(previewMarker);
+    }
+
+    // Create new preview marker with pulsing style
+    const previewIcon = L.divIcon({
+        html: `<div class="preview-marker" style="font-size: 30px;">${icon}</div>`,
+        className: 'custom-marker',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+    });
+
+    previewMarker = L.marker([lat, lng], { icon: previewIcon }).addTo(map);
+
+    // Pan map to show preview
+    map.setView([lat, lng], Math.max(map.getZoom(), 14));
+}
+
+// Make functions globally available
+window.openAddLocationModal = openAddLocationModal;
+window.editLocation = editLocation;
+window.closeLocationModal = closeLocationModal;
+
 // Initialize app by loading locations
 async function initializeApp() {
     try {
@@ -371,6 +450,38 @@ async function initializeApp() {
 
         // Edit mode toggle handler
         document.getElementById('edit-mode-toggle').addEventListener('click', toggleEditMode);
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('location-modal');
+                if (modal.classList.contains('active')) {
+                    closeLocationModal();
+                }
+            }
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('location-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'location-modal') {
+                closeLocationModal();
+            }
+        });
+
+        // Update preview marker when coordinates change
+        document.getElementById('location-lat').addEventListener('input', updatePreviewFromCoordinates);
+        document.getElementById('location-lng').addEventListener('input', updatePreviewFromCoordinates);
+        document.getElementById('location-icon').addEventListener('input', updatePreviewFromCoordinates);
+
+        function updatePreviewFromCoordinates() {
+            const lat = parseFloat(document.getElementById('location-lat').value);
+            const lng = parseFloat(document.getElementById('location-lng').value);
+            const icon = document.getElementById('location-icon').value || '📍';
+
+            if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                createPreviewMarker(lat, lng, icon);
+            }
+        }
     } catch (error) {
         console.error('Error loading locations:', error);
         alert('Failed to load locations. Please refresh the page.');
