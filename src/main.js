@@ -2,7 +2,11 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
-import { locations } from './locations.js';
+let locations = [];
+let isEditMode = false;
+let hasUnsavedChanges = false;
+let currentEditingLocationId = null;
+let previewMarker = null;
 import './style.css';
 
 // Initialize the map centered on Warsaw Old Town
@@ -81,35 +85,6 @@ function createCustomIcon(emoji) {
     });
 }
 
-// Add markers to map
-locations.forEach(location => {
-    const marker = L.marker([location.lat, location.lng], {
-        icon: createCustomIcon(location.icon)
-    }).addTo(map);
-    
-    // Create popup content
-    let popupContent = `
-        <div class="popup-name">${location.name}</div>
-        <div class="popup-category">${location.category}</div>
-    `;
-    
-    if (location.notes) {
-        popupContent += `<div style="margin-top: 6px; font-size: 12px; color: #666;">${location.notes}</div>`;
-    }
-    
-    if (location.url) {
-        popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
-    }
-    
-    marker.bindPopup(popupContent);
-    markers[location.id] = marker;
-    
-    // Click handler for selection
-    marker.on('click', () => {
-        toggleLocationSelection(location);
-    });
-});
-
 // Render locations list in sidebar
 function renderLocationsList() {
     const container = document.getElementById('locations-list');
@@ -137,7 +112,19 @@ function renderLocationsList() {
         activity: 'Activities',
         poi: 'Points of Interest'
     };
-    
+
+    // Add admin controls if in edit mode
+    if (isEditMode) {
+        const adminControls = document.createElement('div');
+        adminControls.innerHTML = `
+            <button class="add-location-btn" onclick="openAddLocationModal()">+ Add Location</button>
+            <button class="download-json-btn ${hasUnsavedChanges ? 'has-changes' : ''}" onclick="downloadLocationsJSON()">
+                ⬇️ Download locations.json
+            </button>
+        `;
+        container.appendChild(adminControls);
+    }
+
     Object.keys(categoryNames).forEach(catKey => {
         if (categories[catKey].length > 0) {
             const categoryDiv = document.createElement('div');
@@ -164,7 +151,22 @@ function renderLocationsList() {
                     <div class="location-name">${location.icon} ${location.name}</div>
                 `;
 
-                item.addEventListener('click', () => {
+                // Add edit controls if in edit mode
+                if (isEditMode) {
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'location-item-actions';
+                    actionsDiv.innerHTML = `
+                        <button class="edit-btn" onclick="editLocation('${location.id}')">✏️ Edit</button>
+                        <button class="delete-btn" onclick="deleteLocation('${location.id}')">🗑️ Delete</button>
+                    `;
+                    item.appendChild(actionsDiv);
+                }
+
+                item.addEventListener('click', (e) => {
+                    // Don't toggle selection if clicking on edit controls
+                    if (e.target.closest('.location-item-actions')) {
+                        return;
+                    }
                     toggleLocationSelection(location);
                 });
 
@@ -295,36 +297,525 @@ function clearSelection() {
 // Make functions globally available
 window.clearSelection = clearSelection;
 
-// Initialize
-renderLocationsList();
+// Toggle edit mode
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const toggleBtn = document.getElementById('edit-mode-toggle');
+    const indicator = document.getElementById('edit-mode-indicator');
 
-// Fit map to show all markers
-const group = new L.featureGroup(Object.values(markers));
-map.fitBounds(group.getBounds().pad(0.1));
+    if (isEditMode) {
+        toggleBtn.classList.add('active');
+        toggleBtn.textContent = 'Exit Edit Mode';
+        indicator.style.display = 'block';
+    } else {
+        toggleBtn.classList.remove('active');
+        toggleBtn.textContent = 'Edit Mode';
+        indicator.style.display = 'none';
+    }
 
-// Store default bounds for reset zoom
-const defaultBounds = group.getBounds().pad(0.1);
+    // Re-render to show/hide edit controls
+    renderLocationsList();
+}
 
-// Reset zoom button handler
-document.getElementById('reset-zoom-btn').addEventListener('click', function() {
-    map.fitBounds(defaultBounds);
-});
+// Make function globally available
+window.toggleEditMode = toggleEditMode;
 
-// Mobile view toggle handlers
-const mapContainer = document.querySelector('.map-container');
-const showMapBtn = document.getElementById('show-map-btn');
-const showListBtn = document.getElementById('show-list-btn');
+// Open modal for adding new location
+function openAddLocationModal() {
+    currentEditingLocationId = null;
+    document.getElementById('modal-title').textContent = 'Add Location';
+    document.getElementById('location-form').reset();
+    document.getElementById('search-results').classList.remove('active');
+    document.getElementById('search-error').classList.remove('active');
+    document.getElementById('location-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
 
-showMapBtn.addEventListener('click', function() {
-    mapContainer.classList.remove('show-list');
-    showMapBtn.classList.add('active');
-    showListBtn.classList.remove('active');
-    // Invalidate map size after display change
-    setTimeout(() => map.invalidateSize(), 100);
-});
+// Open modal for editing existing location
+function editLocation(locationId) {
+    currentEditingLocationId = locationId;
+    const location = locations.find(loc => loc.id === locationId);
 
-showListBtn.addEventListener('click', function() {
-    mapContainer.classList.add('show-list');
-    showListBtn.classList.add('active');
-    showMapBtn.classList.remove('active');
-});
+    if (!location) return;
+
+    document.getElementById('modal-title').textContent = 'Edit Location';
+    document.getElementById('location-name').value = location.name;
+    document.getElementById('location-category').value = location.category;
+    document.getElementById('location-icon').value = location.icon;
+    document.getElementById('location-lat').value = location.lat;
+    document.getElementById('location-lng').value = location.lng;
+    document.getElementById('location-url').value = location.url || '';
+    document.getElementById('location-notes').value = location.notes || '';
+
+    document.getElementById('search-results').classList.remove('active');
+    document.getElementById('search-error').classList.remove('active');
+    document.getElementById('location-modal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Create preview marker
+    createPreviewMarker(location.lat, location.lng, location.icon);
+}
+
+// Close modal
+function closeLocationModal() {
+    document.getElementById('location-modal').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('location-form').reset();
+    document.getElementById('search-results').classList.remove('active');
+    document.getElementById('search-error').classList.remove('active');
+
+    // Remove preview marker if exists
+    if (previewMarker) {
+        map.removeLayer(previewMarker);
+        previewMarker = null;
+    }
+}
+
+// Create or update preview marker
+function createPreviewMarker(lat, lng, icon) {
+    // Remove existing preview
+    if (previewMarker) {
+        map.removeLayer(previewMarker);
+    }
+
+    // Create new preview marker with pulsing style
+    const previewIcon = L.divIcon({
+        html: `<div class="preview-marker" style="font-size: 30px;">${icon}</div>`,
+        className: 'custom-marker',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+    });
+
+    previewMarker = L.marker([lat, lng], { icon: previewIcon }).addTo(map);
+
+    // Pan map to show preview
+    map.setView([lat, lng], Math.max(map.getZoom(), 14));
+}
+
+// Make functions globally available
+window.openAddLocationModal = openAddLocationModal;
+window.editLocation = editLocation;
+window.closeLocationModal = closeLocationModal;
+
+// Debounce helper for rate limiting
+let searchTimeout = null;
+
+// Search address using Nominatim
+async function searchAddress() {
+    const query = document.getElementById('address-search').value.trim();
+    const resultsContainer = document.getElementById('search-results');
+    const errorContainer = document.getElementById('search-error');
+
+    // Clear previous results and errors
+    resultsContainer.innerHTML = '';
+    resultsContainer.classList.remove('active');
+    errorContainer.classList.remove('active');
+    errorContainer.textContent = '';
+
+    if (!query) {
+        errorContainer.textContent = 'Please enter an address to search.';
+        errorContainer.classList.add('active');
+        return;
+    }
+
+    // Show loading state
+    const searchBtn = document.querySelector('.search-btn');
+    const originalText = searchBtn.textContent;
+    searchBtn.textContent = 'Searching...';
+    searchBtn.disabled = true;
+
+    try {
+        // Nominatim API call
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?` +
+            `format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+            {
+                headers: {
+                    'User-Agent': 'WarsawTripMap/1.0'
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Geocoding service unavailable');
+        }
+
+        const results = await response.json();
+
+        if (results.length === 0) {
+            errorContainer.textContent = 'No locations found for this address. Try being more specific.';
+            errorContainer.classList.add('active');
+        } else {
+            // Display results
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div class="search-result-name">${result.display_name.split(',')[0]}</div>
+                    <div class="search-result-address">${result.display_name}</div>
+                `;
+
+                item.addEventListener('click', () => {
+                    selectSearchResult(result);
+                });
+
+                resultsContainer.appendChild(item);
+            });
+
+            resultsContainer.classList.add('active');
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        errorContainer.textContent = 'Unable to reach geocoding service. Check your internet connection.';
+        errorContainer.classList.add('active');
+    } finally {
+        searchBtn.textContent = originalText;
+        searchBtn.disabled = false;
+    }
+}
+
+// Select a search result and populate form
+function selectSearchResult(result) {
+    const name = result.display_name.split(',')[0];
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+
+    document.getElementById('location-name').value = name;
+    document.getElementById('location-lat').value = lat;
+    document.getElementById('location-lng').value = lng;
+
+    // Set default icon if not set
+    if (!document.getElementById('location-icon').value) {
+        document.getElementById('location-icon').value = '📍';
+    }
+
+    // Hide search results
+    document.getElementById('search-results').classList.remove('active');
+
+    // Create preview marker
+    createPreviewMarker(lat, lng, document.getElementById('location-icon').value);
+}
+
+// Make function globally available
+window.searchAddress = searchAddress;
+
+// Save location (add or edit)
+function saveLocation(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('location-name').value.trim();
+    const category = document.getElementById('location-category').value;
+    const icon = document.getElementById('location-icon').value.trim() || '📍';
+    const lat = parseFloat(document.getElementById('location-lat').value);
+    const lng = parseFloat(document.getElementById('location-lng').value);
+    const url = document.getElementById('location-url').value.trim() || null;
+    const notes = document.getElementById('location-notes').value.trim() || null;
+
+    // Validation
+    if (!name) {
+        alert('Please enter a location name.');
+        return;
+    }
+
+    if (!category) {
+        alert('Please select a category.');
+        return;
+    }
+
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+        alert('Latitude must be between -90 and 90.');
+        return;
+    }
+
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+        alert('Longitude must be between -180 and 180.');
+        return;
+    }
+
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        alert('URL must start with http:// or https://');
+        return;
+    }
+
+    // Create or update location
+    if (currentEditingLocationId) {
+        // Edit existing location
+        const index = locations.findIndex(loc => loc.id === currentEditingLocationId);
+        if (index !== -1) {
+            locations[index] = {
+                ...locations[index],
+                name,
+                category,
+                icon,
+                lat,
+                lng,
+                url,
+                notes
+            };
+        }
+    } else {
+        // Add new location
+        const newId = 'loc-' + Date.now();
+        locations.push({
+            id: newId,
+            name,
+            category,
+            icon,
+            lat,
+            lng,
+            url,
+            notes
+        });
+    }
+
+    // Mark as having unsaved changes
+    hasUnsavedChanges = true;
+    document.getElementById('unsaved-indicator').style.display = 'inline';
+
+    // Close modal
+    closeLocationModal();
+
+    // Re-render map and sidebar
+    refreshMapAndSidebar();
+}
+
+// Refresh map markers and sidebar
+function refreshMapAndSidebar() {
+    // Clear existing markers
+    Object.values(markers).forEach(marker => {
+        map.removeLayer(marker);
+    });
+
+    // Clear markers object
+    for (let key in markers) {
+        delete markers[key];
+    }
+
+    // Re-add all markers
+    locations.forEach(location => {
+        const marker = L.marker([location.lat, location.lng], {
+            icon: createCustomIcon(location.icon)
+        }).addTo(map);
+
+        let popupContent = `
+            <div class="popup-name">${location.name}</div>
+            <div class="popup-category">${location.category}</div>
+        `;
+
+        if (location.notes) {
+            popupContent += `<div style="margin-top: 6px; font-size: 12px; color: #666;">${location.notes}</div>`;
+        }
+
+        if (location.url) {
+            popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
+        }
+
+        marker.bindPopup(popupContent);
+        markers[location.id] = marker;
+
+        marker.on('click', () => {
+            toggleLocationSelection(location);
+        });
+    });
+
+    // Re-render sidebar
+    renderLocationsList();
+
+    // Update route if needed
+    updateRoute();
+}
+
+// Make function globally available
+window.saveLocation = saveLocation;
+
+// Delete location with confirmation
+function deleteLocation(locationId) {
+    const location = locations.find(loc => loc.id === locationId);
+
+    if (!location) return;
+
+    // Check if location is currently selected for routing
+    if (selectedLocations.includes(locationId)) {
+        alert('Cannot delete location while it\'s selected for routing. Clear selection first.');
+        return;
+    }
+
+    // Confirm deletion
+    if (!confirm(`Delete "${location.name}"? This cannot be undone.`)) {
+        return;
+    }
+
+    // Remove from locations array
+    locations = locations.filter(loc => loc.id !== locationId);
+
+    // Mark as having unsaved changes
+    hasUnsavedChanges = true;
+    document.getElementById('unsaved-indicator').style.display = 'inline';
+
+    // Refresh map and sidebar
+    refreshMapAndSidebar();
+}
+
+// Make function globally available
+window.deleteLocation = deleteLocation;
+
+// Download locations as JSON file
+function downloadLocationsJSON() {
+    try {
+        // Convert locations to JSON with pretty printing
+        const jsonString = JSON.stringify(locations, null, 2);
+
+        // Create Blob
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'locations.json';
+
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Reset unsaved changes indicator
+        hasUnsavedChanges = false;
+        document.getElementById('unsaved-indicator').style.display = 'none';
+
+        // Re-render to remove pulse animation from download button
+        renderLocationsList();
+
+        alert('locations.json downloaded successfully!\n\nNext steps:\n1. Move the file to public/locations.json\n2. Commit and push to GitHub\n3. GitHub Actions will deploy automatically');
+    } catch (error) {
+        console.error('Download error:', error);
+        alert('Failed to download locations.json. Please try again.');
+    }
+}
+
+// Make function globally available
+window.downloadLocationsJSON = downloadLocationsJSON;
+
+// Initialize app by loading locations
+async function initializeApp() {
+    try {
+        const response = await fetch('./locations.json');
+        if (!response.ok) {
+            throw new Error('Failed to load locations');
+        }
+        locations = await response.json();
+
+        // Add markers to map
+        locations.forEach(location => {
+            const marker = L.marker([location.lat, location.lng], {
+                icon: createCustomIcon(location.icon)
+            }).addTo(map);
+
+            let popupContent = `
+                <div class="popup-name">${location.name}</div>
+                <div class="popup-category">${location.category}</div>
+            `;
+
+            if (location.notes) {
+                popupContent += `<div style="margin-top: 6px; font-size: 12px; color: #666;">${location.notes}</div>`;
+            }
+
+            if (location.url) {
+                popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
+            }
+
+            marker.bindPopup(popupContent);
+            markers[location.id] = marker;
+
+            marker.on('click', () => {
+                toggleLocationSelection(location);
+            });
+        });
+
+        // Initialize locations list
+        renderLocationsList();
+
+        // Fit map to show all markers
+        const group = new L.featureGroup(Object.values(markers));
+        map.fitBounds(group.getBounds().pad(0.1));
+
+        // Store default bounds for reset zoom
+        const defaultBounds = group.getBounds().pad(0.1);
+
+        // Reset zoom button handler
+        document.getElementById('reset-zoom-btn').addEventListener('click', function() {
+            map.fitBounds(defaultBounds);
+        });
+
+        // Edit mode toggle handler
+        document.getElementById('edit-mode-toggle').addEventListener('click', toggleEditMode);
+
+        // Mobile view toggle handlers
+        const mapContainer = document.querySelector('.map-container');
+        const showMapBtn = document.getElementById('show-map-btn');
+        const showListBtn = document.getElementById('show-list-btn');
+
+        showMapBtn.addEventListener('click', function() {
+            mapContainer.classList.remove('show-list');
+            showMapBtn.classList.add('active');
+            showListBtn.classList.remove('active');
+            // Invalidate map size after display change
+            setTimeout(() => map.invalidateSize(), 100);
+        });
+
+        showListBtn.addEventListener('click', function() {
+            mapContainer.classList.add('show-list');
+            showListBtn.classList.add('active');
+            showMapBtn.classList.remove('active');
+        });
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('location-modal');
+                if (modal.classList.contains('active')) {
+                    closeLocationModal();
+                }
+            }
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('location-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'location-modal') {
+                closeLocationModal();
+            }
+        });
+
+        // Update preview marker when coordinates change
+        document.getElementById('location-lat').addEventListener('input', updatePreviewFromCoordinates);
+        document.getElementById('location-lng').addEventListener('input', updatePreviewFromCoordinates);
+        document.getElementById('location-icon').addEventListener('input', updatePreviewFromCoordinates);
+
+        function updatePreviewFromCoordinates() {
+            const lat = parseFloat(document.getElementById('location-lat').value);
+            const lng = parseFloat(document.getElementById('location-lng').value);
+            const icon = document.getElementById('location-icon').value || '📍';
+
+            if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                createPreviewMarker(lat, lng, icon);
+            }
+        }
+
+        // Allow Enter key to trigger search
+        document.getElementById('address-search').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchAddress();
+            }
+        });
+    } catch (error) {
+        console.error('Error loading locations:', error);
+        alert('Failed to load locations. Please refresh the page.');
+    }
+}
+
+// Start the app
+initializeApp();

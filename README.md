@@ -103,21 +103,92 @@ Simply open `index.html` in your web browser. No server required!
 
 1. **Browse Locations**: Scroll through the sidebar to see all destinations organized by category
 2. **View on Map**: Click on any marker to see details and website link
-3. **Calculate Routes**: 
+3. **Calculate Routes**:
    - Click on two locations in the sidebar
    - See walking/driving distances automatically calculated
    - View the route drawn on the map
-4. **Schedule Visits**: 
+4. **Schedule Visits**:
    - Click "+ Add Visit" on any location
    - Enter date and time
    - Your schedule is saved in your browser
 5. **Navigate**: Click on website links to open booking/information pages
 
+## 🛠️ Admin Mode - Managing Locations
+
+**Admin mode** allows you to add, edit, and delete locations through the UI without touching code.
+
+### Accessing Admin Mode
+
+1. Open the map (you must be logged in with the access key)
+2. Click the **"Edit Mode"** button in the sidebar header
+3. The interface changes to show editing controls
+
+### Adding a New Location
+
+1. Enter admin mode
+2. Click **"+ Add Location"** at the top of the locations list
+3. **Search for the address**:
+   - Type the location name or address (e.g., "Copernicus Science Centre, Warsaw")
+   - Click "Search" or press Enter
+   - Select the correct result from the dropdown
+4. **Fill in details**:
+   - Name (pre-filled from search, but editable)
+   - Category (hotel, museum, restaurant, cafe, activity, poi)
+   - Icon (emoji like 🏛️ or 🍽️)
+   - Coordinates (auto-filled from search, but editable)
+   - Website URL (optional)
+   - Notes (optional)
+5. Watch the preview marker appear on the map as you type coordinates
+6. Click **"Save Location"**
+
+### Editing an Existing Location
+
+1. Enter admin mode
+2. Click the **✏️ Edit** button on any location
+3. Modify any fields in the modal
+4. Click **"Save Location"**
+
+### Deleting a Location
+
+1. Enter admin mode
+2. Click the **🗑️ Delete** button on any location
+3. Confirm the deletion in the dialog
+4. The location is removed from the map and sidebar
+
+**Note:** You cannot delete a location that's currently selected for routing. Clear the selection first.
+
+### Saving Your Changes
+
+**Important:** Changes are only in memory until you download and deploy the JSON file.
+
+1. After making changes, notice the **"• Unsaved changes"** indicator
+2. Click **"⬇️ Download locations.json"** (the button will pulse if there are unsaved changes)
+3. The file downloads to your browser's download folder
+4. **Deploy the changes**:
+   ```bash
+   # Move the downloaded file to your project
+   mv ~/Downloads/locations.json public/locations.json
+
+   # Commit and push
+   git add public/locations.json
+   git commit -m "Update locations from admin UI"
+   git push origin main
+   ```
+5. GitHub Actions will automatically deploy the changes
+
+### Tips
+
+- **Address search** uses OpenStreetMap's Nominatim service - be specific with addresses
+- **Icon field** accepts any emoji - copy from your system's emoji picker or websites like [Emojipedia](https://emojipedia.org/)
+- **Preview markers** (orange, pulsing) show where locations will appear while editing
+- **Changes are local** until you download and deploy - you can safely experiment
+- **Exit edit mode** to return to the clean trip-planning interface
+
 ## 🛠️ Technical Details
 
 - **Map Provider**: OpenStreetMap via Leaflet.js
 - **Routing**: Leaflet Routing Machine (using OSRM)
-- **Data Storage**: Browser localStorage (your visit times are saved locally)
+- **Data Storage**: Browser localStorage (your visit times are saved locally) + JSON file (location data)
 - **No Server Required**: Pure client-side application
 - **Privacy**: All data stays in your browser
 
