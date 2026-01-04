@@ -702,7 +702,7 @@ window.downloadLocationsJSON = downloadLocationsJSON;
 // Initialize app by loading locations
 async function initializeApp() {
     try {
-        const response = await fetch('/locations.json');
+        const response = await fetch('./locations.json');
         if (!response.ok) {
             throw new Error('Failed to load locations');
         }

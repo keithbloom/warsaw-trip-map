@@ -158,5 +158,35 @@
     "lng": 21.0122,
     "url": "https://abpoland.com/tours/communist-tour-in-warsaw",
     "notes": "Guided communist history tour"
+  },
+  {
+    "id": "loc-1767538760768",
+    "name": "Shuk Mezze & Bar",
+    "category": "restaurant",
+    "icon": "🍽",
+    "lat": 52.206545,
+    "lng": 20.973476,
+    "url": "https://www.shuk.pl",
+    "notes": null
+  },
+  {
+    "id": "loc-1767538954336",
+    "name": "Warszawa Wschodnia",
+    "category": "restaurant",
+    "icon": "🍽",
+    "lat": 52.249291,
+    "lng": 21.060353,
+    "url": "https://www.mateuszgessler.com.pl/restauracje/warszawa-wschodnia/",
+    "notes": null
+  },
+  {
+    "id": "loc-1767539455885",
+    "name": "Soul Kitchen",
+    "category": "restaurant",
+    "icon": "🍽",
+    "lat": 52.229448,
+    "lng": 21.014881,
+    "url": "https://www.soulkitchen.pl/en/home/",
+    "notes": null
   }
 ]
