@@ -628,6 +628,37 @@ function refreshMapAndSidebar() {
 // Make function globally available
 window.saveLocation = saveLocation;
 
+// Delete location with confirmation
+function deleteLocation(locationId) {
+    const location = locations.find(loc => loc.id === locationId);
+
+    if (!location) return;
+
+    // Check if location is currently selected for routing
+    if (selectedLocations.includes(locationId)) {
+        alert('Cannot delete location while it\'s selected for routing. Clear selection first.');
+        return;
+    }
+
+    // Confirm deletion
+    if (!confirm(`Delete "${location.name}"? This cannot be undone.`)) {
+        return;
+    }
+
+    // Remove from locations array
+    locations = locations.filter(loc => loc.id !== locationId);
+
+    // Mark as having unsaved changes
+    hasUnsavedChanges = true;
+    document.getElementById('unsaved-indicator').style.display = 'inline';
+
+    // Refresh map and sidebar
+    refreshMapAndSidebar();
+}
+
+// Make function globally available
+window.deleteLocation = deleteLocation;
+
 // Initialize app by loading locations
 async function initializeApp() {
     try {
