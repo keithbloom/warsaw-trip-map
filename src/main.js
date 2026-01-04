@@ -160,7 +160,11 @@ function renderLocationsList() {
                     item.appendChild(actionsDiv);
                 }
 
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    // Don't toggle selection if clicking on edit controls
+                    if (e.target.closest('.location-item-actions')) {
+                        return;
+                    }
                     toggleLocationSelection(location);
                 });
 
