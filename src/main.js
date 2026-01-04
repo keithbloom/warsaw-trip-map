@@ -2,7 +2,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
-import { locations } from './locations.js';
+let locations = [];
+let isEditMode = false;
+let hasUnsavedChanges = false;
 import './style.css';
 
 // Initialize the map centered on Warsaw Old Town
@@ -80,35 +82,6 @@ function createCustomIcon(emoji) {
         popupAnchor: [0, -15]
     });
 }
-
-// Add markers to map
-locations.forEach(location => {
-    const marker = L.marker([location.lat, location.lng], {
-        icon: createCustomIcon(location.icon)
-    }).addTo(map);
-    
-    // Create popup content
-    let popupContent = `
-        <div class="popup-name">${location.name}</div>
-        <div class="popup-category">${location.category}</div>
-    `;
-    
-    if (location.notes) {
-        popupContent += `<div style="margin-top: 6px; font-size: 12px; color: #666;">${location.notes}</div>`;
-    }
-    
-    if (location.url) {
-        popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
-    }
-    
-    marker.bindPopup(popupContent);
-    markers[location.id] = marker;
-    
-    // Click handler for selection
-    marker.on('click', () => {
-        toggleLocationSelection(location);
-    });
-});
 
 // Render locations list in sidebar
 function renderLocationsList() {
@@ -295,17 +268,61 @@ function clearSelection() {
 // Make functions globally available
 window.clearSelection = clearSelection;
 
-// Initialize
-renderLocationsList();
+// Initialize app by loading locations
+async function initializeApp() {
+    try {
+        const response = await fetch('/locations.json');
+        if (!response.ok) {
+            throw new Error('Failed to load locations');
+        }
+        locations = await response.json();
 
-// Fit map to show all markers
-const group = new L.featureGroup(Object.values(markers));
-map.fitBounds(group.getBounds().pad(0.1));
+        // Add markers to map
+        locations.forEach(location => {
+            const marker = L.marker([location.lat, location.lng], {
+                icon: createCustomIcon(location.icon)
+            }).addTo(map);
 
-// Store default bounds for reset zoom
-const defaultBounds = group.getBounds().pad(0.1);
+            let popupContent = `
+                <div class="popup-name">${location.name}</div>
+                <div class="popup-category">${location.category}</div>
+            `;
 
-// Reset zoom button handler
-document.getElementById('reset-zoom-btn').addEventListener('click', function() {
-    map.fitBounds(defaultBounds);
-});
+            if (location.notes) {
+                popupContent += `<div style="margin-top: 6px; font-size: 12px; color: #666;">${location.notes}</div>`;
+            }
+
+            if (location.url) {
+                popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
+            }
+
+            marker.bindPopup(popupContent);
+            markers[location.id] = marker;
+
+            marker.on('click', () => {
+                toggleLocationSelection(location);
+            });
+        });
+
+        // Initialize locations list
+        renderLocationsList();
+
+        // Fit map to show all markers
+        const group = new L.featureGroup(Object.values(markers));
+        map.fitBounds(group.getBounds().pad(0.1));
+
+        // Store default bounds for reset zoom
+        const defaultBounds = group.getBounds().pad(0.1);
+
+        // Reset zoom button handler
+        document.getElementById('reset-zoom-btn').addEventListener('click', function() {
+            map.fitBounds(defaultBounds);
+        });
+    } catch (error) {
+        console.error('Error loading locations:', error);
+        alert('Failed to load locations. Please refresh the page.');
+    }
+}
+
+// Start the app
+initializeApp();
