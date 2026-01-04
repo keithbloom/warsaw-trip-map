@@ -110,7 +110,19 @@ function renderLocationsList() {
         activity: 'Activities',
         poi: 'Points of Interest'
     };
-    
+
+    // Add admin controls if in edit mode
+    if (isEditMode) {
+        const adminControls = document.createElement('div');
+        adminControls.innerHTML = `
+            <button class="add-location-btn" onclick="openAddLocationModal()">+ Add Location</button>
+            <button class="download-json-btn ${hasUnsavedChanges ? 'has-changes' : ''}" onclick="downloadLocationsJSON()">
+                ⬇️ Download locations.json
+            </button>
+        `;
+        container.appendChild(adminControls);
+    }
+
     Object.keys(categoryNames).forEach(catKey => {
         if (categories[catKey].length > 0) {
             const categoryDiv = document.createElement('div');
@@ -136,6 +148,17 @@ function renderLocationsList() {
                 item.innerHTML = `
                     <div class="location-name">${location.icon} ${location.name}</div>
                 `;
+
+                // Add edit controls if in edit mode
+                if (isEditMode) {
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'location-item-actions';
+                    actionsDiv.innerHTML = `
+                        <button class="edit-btn" onclick="editLocation('${location.id}')">✏️ Edit</button>
+                        <button class="delete-btn" onclick="deleteLocation('${location.id}')">🗑️ Delete</button>
+                    `;
+                    item.appendChild(actionsDiv);
+                }
 
                 item.addEventListener('click', () => {
                     toggleLocationSelection(location);
@@ -268,6 +291,29 @@ function clearSelection() {
 // Make functions globally available
 window.clearSelection = clearSelection;
 
+// Toggle edit mode
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const toggleBtn = document.getElementById('edit-mode-toggle');
+    const indicator = document.getElementById('edit-mode-indicator');
+
+    if (isEditMode) {
+        toggleBtn.classList.add('active');
+        toggleBtn.textContent = 'Exit Edit Mode';
+        indicator.style.display = 'block';
+    } else {
+        toggleBtn.classList.remove('active');
+        toggleBtn.textContent = 'Edit Mode';
+        indicator.style.display = 'none';
+    }
+
+    // Re-render to show/hide edit controls
+    renderLocationsList();
+}
+
+// Make function globally available
+window.toggleEditMode = toggleEditMode;
+
 // Initialize app by loading locations
 async function initializeApp() {
     try {
@@ -318,6 +364,9 @@ async function initializeApp() {
         document.getElementById('reset-zoom-btn').addEventListener('click', function() {
             map.fitBounds(defaultBounds);
         });
+
+        // Edit mode toggle handler
+        document.getElementById('edit-mode-toggle').addEventListener('click', toggleEditMode);
     } catch (error) {
         console.error('Error loading locations:', error);
         alert('Failed to load locations. Please refresh the page.');
