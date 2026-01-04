@@ -397,6 +397,108 @@ window.openAddLocationModal = openAddLocationModal;
 window.editLocation = editLocation;
 window.closeLocationModal = closeLocationModal;
 
+// Debounce helper for rate limiting
+let searchTimeout = null;
+
+// Search address using Nominatim
+async function searchAddress() {
+    const query = document.getElementById('address-search').value.trim();
+    const resultsContainer = document.getElementById('search-results');
+    const errorContainer = document.getElementById('search-error');
+
+    // Clear previous results and errors
+    resultsContainer.innerHTML = '';
+    resultsContainer.classList.remove('active');
+    errorContainer.classList.remove('active');
+    errorContainer.textContent = '';
+
+    if (!query) {
+        errorContainer.textContent = 'Please enter an address to search.';
+        errorContainer.classList.add('active');
+        return;
+    }
+
+    // Show loading state
+    const searchBtn = document.querySelector('.search-btn');
+    const originalText = searchBtn.textContent;
+    searchBtn.textContent = 'Searching...';
+    searchBtn.disabled = true;
+
+    try {
+        // Nominatim API call
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?` +
+            `format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+            {
+                headers: {
+                    'User-Agent': 'WarsawTripMap/1.0'
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error('Geocoding service unavailable');
+        }
+
+        const results = await response.json();
+
+        if (results.length === 0) {
+            errorContainer.textContent = 'No locations found for this address. Try being more specific.';
+            errorContainer.classList.add('active');
+        } else {
+            // Display results
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div class="search-result-name">${result.display_name.split(',')[0]}</div>
+                    <div class="search-result-address">${result.display_name}</div>
+                `;
+
+                item.addEventListener('click', () => {
+                    selectSearchResult(result);
+                });
+
+                resultsContainer.appendChild(item);
+            });
+
+            resultsContainer.classList.add('active');
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        errorContainer.textContent = 'Unable to reach geocoding service. Check your internet connection.';
+        errorContainer.classList.add('active');
+    } finally {
+        searchBtn.textContent = originalText;
+        searchBtn.disabled = false;
+    }
+}
+
+// Select a search result and populate form
+function selectSearchResult(result) {
+    const name = result.display_name.split(',')[0];
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+
+    document.getElementById('location-name').value = name;
+    document.getElementById('location-lat').value = lat;
+    document.getElementById('location-lng').value = lng;
+
+    // Set default icon if not set
+    if (!document.getElementById('location-icon').value) {
+        document.getElementById('location-icon').value = '📍';
+    }
+
+    // Hide search results
+    document.getElementById('search-results').classList.remove('active');
+
+    // Create preview marker
+    createPreviewMarker(lat, lng, document.getElementById('location-icon').value);
+}
+
+// Make function globally available
+window.searchAddress = searchAddress;
+
 // Initialize app by loading locations
 async function initializeApp() {
     try {
@@ -482,6 +584,14 @@ async function initializeApp() {
                 createPreviewMarker(lat, lng, icon);
             }
         }
+
+        // Allow Enter key to trigger search
+        document.getElementById('address-search').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchAddress();
+            }
+        });
     } catch (error) {
         console.error('Error loading locations:', error);
         alert('Failed to load locations. Please refresh the page.');
