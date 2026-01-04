@@ -659,6 +659,46 @@ function deleteLocation(locationId) {
 // Make function globally available
 window.deleteLocation = deleteLocation;
 
+// Download locations as JSON file
+function downloadLocationsJSON() {
+    try {
+        // Convert locations to JSON with pretty printing
+        const jsonString = JSON.stringify(locations, null, 2);
+
+        // Create Blob
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'locations.json';
+
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Reset unsaved changes indicator
+        hasUnsavedChanges = false;
+        document.getElementById('unsaved-indicator').style.display = 'none';
+
+        // Re-render to remove pulse animation from download button
+        renderLocationsList();
+
+        alert('locations.json downloaded successfully!\n\nNext steps:\n1. Move the file to public/locations.json\n2. Commit and push to GitHub\n3. GitHub Actions will deploy automatically');
+    } catch (error) {
+        console.error('Download error:', error);
+        alert('Failed to download locations.json. Please try again.');
+    }
+}
+
+// Make function globally available
+window.downloadLocationsJSON = downloadLocationsJSON;
+
 // Initialize app by loading locations
 async function initializeApp() {
     try {
