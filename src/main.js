@@ -753,6 +753,25 @@ async function initializeApp() {
         // Edit mode toggle handler
         document.getElementById('edit-mode-toggle').addEventListener('click', toggleEditMode);
 
+        // Mobile view toggle handlers
+        const mapContainer = document.querySelector('.map-container');
+        const showMapBtn = document.getElementById('show-map-btn');
+        const showListBtn = document.getElementById('show-list-btn');
+
+        showMapBtn.addEventListener('click', function() {
+            mapContainer.classList.remove('show-list');
+            showMapBtn.classList.add('active');
+            showListBtn.classList.remove('active');
+            // Invalidate map size after display change
+            setTimeout(() => map.invalidateSize(), 100);
+        });
+
+        showListBtn.addEventListener('click', function() {
+            mapContainer.classList.add('show-list');
+            showListBtn.classList.add('active');
+            showMapBtn.classList.remove('active');
+        });
+
         // Close modal on ESC key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
