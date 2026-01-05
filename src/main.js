@@ -610,6 +610,10 @@ function refreshMapAndSidebar() {
             popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
         }
 
+        // Add Apple Maps link
+        const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(location.name)}&ll=${location.lat},${location.lng}`;
+        popupContent += `<a href="${appleMapsUrl}" target="_blank" class="popup-link" style="display: block; margin-top: 4px;">Open in Apple Maps 🗺️</a>`;
+
         marker.bindPopup(popupContent);
         markers[location.id] = marker;
 
@@ -726,6 +730,10 @@ async function initializeApp() {
             if (location.url) {
                 popupContent += `<a href="${location.url}" target="_blank" class="popup-link">Visit Website →</a>`;
             }
+
+            // Add Apple Maps link
+            const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(location.name)}&ll=${location.lat},${location.lng}`;
+            popupContent += `<a href="${appleMapsUrl}" target="_blank" class="popup-link" style="display: block; margin-top: 4px;">Open in Apple Maps 🗺️</a>`;
 
             marker.bindPopup(popupContent);
             markers[location.id] = marker;

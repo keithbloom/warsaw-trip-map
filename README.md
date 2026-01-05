@@ -1,6 +1,6 @@
 # Warsaw Trip Map - January 2026
 
-An interactive map for planning your Warsaw city break from **Thursday 8 to Sunday 11 January 2026**.
+An [interactive map](https://keithbloom.github.io/warsaw-trip-map/) for planning your Warsaw city break from **Thursday 8 to Sunday 11 January 2026**.
 
 ## 🌟 Features
 
